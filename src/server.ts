@@ -28,6 +28,7 @@ io.on("connection", (socket) => {
 
  socket.on("disconnect", () => {
   console.log("client disconnected");
+  if(query.name === "screenshot-provider") return;
   client--;
  });
 });

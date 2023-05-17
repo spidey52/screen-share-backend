@@ -3,6 +3,7 @@ import screenshotDesktop from "screenshot-desktop";
 import env from "dotenv";
 
 env.config();
+let screenshotCount = 0;
 
 const myenv = {
  socketUrl: process.env.SOCKET_URL,
@@ -34,7 +35,7 @@ const startScrenshot = () => {
   });
 
   socket.emit("client-send-screenshot", screenshot);
-  console.log("screenshot sent");
+  console.log("screenshot sent", ++screenshotCount);
  }, +myenv.screenShotInterval);
 };
 
