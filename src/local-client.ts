@@ -1,51 +1,28 @@
-import io from "socket.io-client";
-import screenshotDesktop from "screenshot-desktop";
+import axios from "axios";
 import env from "dotenv";
+import FormData from "form-data";
+import screenshotDesktop from "screenshot-desktop";
 
 env.config();
-let screenshotCount = 0;
 
-const myenv = {
- socketUrl: process.env.SOCKET_URL,
- screenShotInterval: process.env.SCREENSHOT_INTERVAL,
-};
-
-if (!myenv.socketUrl) {
- console.error("SOCKET_URL is not defined");
- process.exit(1);
-}
-
-if (!myenv.screenShotInterval) {
- console.error("SCREENSHOT_INTERVAL is not defined");
- process.exit(1);
-}
-
-const socket = io(myenv.socketUrl, {
- query: {
-  name: "screenshot-provider",
- },
-});
-
-let intervalId: NodeJS.Timeout | undefined;
-const startScrenshot = () => {
- if (!myenv.screenShotInterval) return console.error("SCREENSHOT_INTERVAL is not defined");
- intervalId = setInterval(async () => {
-  const screenshot = await screenshotDesktop({
+const startSending = async () => {
+ while (true) {
+  const image = await screenshotDesktop({
    format: "png",
   });
 
-  socket.emit("client-send-screenshot", screenshot);
-  console.log("screenshot sent", ++screenshotCount);
- }, +myenv.screenShotInterval);
+  // const base64 = image.toString("base64");
+  const formData = new FormData();
+  formData.append("image", image, "screenshot.png");
+
+  try {
+   await axios.post("http://localhost:3000/screenshot", formData, {});
+  } catch (error) {
+   console.log("error in sending screenshot");
+  }
+  console.log("Screenshot sent");
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+ }
 };
 
-socket.on("connect", () => {
- console.log("connected to server");
- startScrenshot();
-});
-
-socket.on("disconnect", () => {
- console.log("disconnected from server");
- if (intervalId) clearInterval(intervalId);
- intervalId = undefined;
-});
+startSending();

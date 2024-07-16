@@ -1,8 +1,14 @@
 import express from "express";
+import fileUpload, { UploadedFile } from "express-fileupload";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
 const app = express();
+app.use(fileUpload({ createParentPath: true }));
+app.use(express.json());
+
+app.use(express.static("public"));
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
  cors: {
@@ -10,28 +16,19 @@ const io = new Server(httpServer, {
  },
 });
 
-let client = 0;
+app.post("/screenshot", (req, res) => {
+ try {
+  const image = req.files?.image as UploadedFile;
+  console.log("image received");
+  image.mv("./public/screenshot.png");
 
-io.on("connection", (socket) => {
- const query = socket.handshake.query;
-
- if (query.name === "screenshot-provider") {
-  console.log("screenshot-provider connected");
-  socket.on("client-send-screenshot", async (data) => {
-   io.emit("server-send-screenshot", data);
-   io.emit("client", client);
-  });
- } else {
-  console.log("client connected");
-  client++;
+  return res.status(200).send({ message: "Screenshot received" });
+ } catch (error) {
+  console.error(error);
  }
-
- socket.on("disconnect", () => {
-  console.log("client disconnected");
-  if(query.name === "screenshot-provider") return;
-  client--;
- });
 });
+
+app.get("/screenshot", (req, res) => {});
 
 httpServer.listen(3000, () => {
  console.log("listening on *:3000");
