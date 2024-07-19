@@ -20,7 +20,7 @@ app.post("/screenshot", (req, res) => {
  try {
   const image = req.files?.image as UploadedFile;
   console.log("image received");
-  image.mv("./public/screenshot.png");
+  image.mv("./public/screenshot.webp");
 
   return res.status(200).send({ message: "Screenshot received" });
  } catch (error) {
